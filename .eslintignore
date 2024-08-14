@@ -1,0 +1,11 @@
+coverage
+dist
+public
+jest-cache
+node_modules
+**/*.snap
+
+# Segment
+src/analytics/*
+!src/analytics/plan.json
+!src/analytics/__mocks__

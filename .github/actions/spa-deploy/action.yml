@@ -1,0 +1,42 @@
+name: Deploy SPA Application
+author: Guild Education
+description: Deploys a SPA application
+inputs:
+  aws-access-key-id:
+    description: 'AWS access key id for API access'
+    required: true
+  aws-secret-access-key:
+    description: 'AWS secret access key for API access'
+    required: true
+  aws_region:
+    description: 'AWS region'
+    default: 'us-west-2'
+    required: false
+  env:
+    description: 'This represents the env of the deployment'
+    default: 'dev'
+    required: false
+  CONTACT:
+    description: 'Contact information for the owner'
+    required: true
+  OWNER:
+    description: 'The team or person that will be managing the resource'
+    required: true
+  REPO:
+    description: 'The name of the github repository with organization name (ex. GuildEducationInc/frontend-infrastructure)'
+    required: true
+  SERVICE:
+    description: 'The name of the service'
+    required: true
+outputs:
+  CONTACT:
+    description: 'Contact information for the owner'
+  OWNER:
+    description: 'The team or person that will be managing the resource'
+  REPO:
+    description: 'The name of the github repository with organization name (ex. GuildEducationInc/frontend-infrastructure)'
+  SERVICE:
+    description: 'The name of the service'
+runs:
+  using: 'node20'
+  main: 'index.js'

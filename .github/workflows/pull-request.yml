@@ -1,0 +1,82 @@
+name: Deploy PR app
+
+# This makes workflows for PRs with the specified key run only one at a time. This prevents race conditions with this
+# workflow running and the pr-close teardown workflow running.
+concurrency: pr-build-${{ github.event.pull_request.number }}
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  install_dependencies:
+    runs-on: ubuntu-20.04
+    container: node:18
+    env:
+      NPM_TOKEN: ${{ secrets.DEVOPS_ALL_NPM_TOKEN }}
+      SEGMENT_TYPEWRITER_TOKEN: ${{ secrets.DEVOPS_ALL_SEGMENT_TYPEWRITER_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Cache node modules
+        uses: actions/cache@v4
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: |
+            node_modules
+            ./src/analytics
+            ~/.cache/Cypress
+          key: ${{ runner.os }}-pr-build-${{ env.cache-name }}-${{ hashFiles('**/yarn.lock') }}
+      - name: yarn install
+        run: yarn --frozen-lockfile --network-timeout 120000
+      - name: install typewriter analytics utilities
+        run: yarn typewriter:prod
+
+  deploy_pr:
+    name: Deploy PR application to AWS
+    needs: [install_dependencies]
+    uses: ./.github/workflows/deploy-app-to-aws.yml
+    with:
+      env: 'dev'
+      env_file: 'staging'
+      node_env: 'production'
+      cloudfront_distribution_name: pr-${{ github.event.number }}-${{ github.event.repository.name }}
+      cache_path: pr-build
+      is_pr_app_deploy: true
+    secrets:
+      # Though this workflow is passed `env` above, for PR deployments, it is not used for determining the AWS account
+      # to deploy to. Instead, the target account is assumed from the AWS credentials used, so be careful if changing
+      # these.
+      AWS_ACCESS_KEY_ID: ${{ secrets.DEVOPS_DEV_AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.DEVOPS_DEV_AWS_SECRET_ACCESS_KEY }}
+      NPM_TOKEN: ${{ secrets.DEVOPS_ALL_NPM_TOKEN }}
+      GITHUB_API_ACCESS_TOKEN: ${{ secrets.DEVOPS_ALL_GITHUB_API_ACCESS_TOKEN }}
+      SEGMENT_TYPEWRITER_TOKEN: ${{ secrets.DEVOPS_ALL_SEGMENT_TYPEWRITER_TOKEN }}
+      # Required for DORA metrics
+      JELLYFISH_API_TOKEN: ${{ secrets.JELLYFISH_API_TOKEN }}
+      DEVOPS_DATADOG_API_KEY: ${{ secrets.DEVOPS_DATADOG_API_KEY }}
+
+  post_pr_app_link_to_github:
+    runs-on: ubuntu-20.04
+    container: node:18
+    name: Post PR app link to GitHub PR
+    steps:
+      - name: Post Preview URL to GitHub Pull Request
+        uses: the-wright-jamie/update-pr-info-action@v1
+        with:
+          repo-token: ${{ secrets.DEVOPS_SEMANTIC_RELEASE_TOKEN }}
+          head-branch-regex: ^(?!.*/\.)(?!.*\.\.)(?!/)(?!.*//)(?!.*@\{)(?!.*\\)[^\000-\037\177 ~^:?*[]+[^\000-\037\177 ~^:?*[]+(?<!/)(?<!\.)$
+          lowercase-branch: false
+          title-template: ' '
+          title-update-action: 'prefix'
+          title-insert-space: false
+          title-uppercase-head-match: true
+          body-template: '[Preview App URL](https://pr-${{ github.event.number }}-${{ github.event.repository.name }}.guildacceptance.com)'
+          body-update-action: 'prefix'
+          body-newline-count: 2
+          body-uppercase-head-match: true

@@ -1,0 +1,176 @@
+# This is a reusable workflow to deploy our application to AWS.
+# See https://docs.github.com/en/actions/using-workflows/reusing-workflows
+
+# This workflow contains tasks that deploy the frontend app to the appropriate AWS environment.
+
+name: Deploy App to AWS
+
+# The repo and owner should match the respective micro FE repo and owner.
+# Note: The 'owner' and 'contact' values are also hard-coded below where we send DORA metrics to Jellyfish,
+# and so those values will need to be changed as well.
+env:
+  owner: employer-portal
+  contact: squad-employer-portal
+  repo: ${{ github.repository }}
+  service: ${{ github.event.repository.name }}
+
+on:
+  workflow_call:
+    inputs:
+      env:
+        description: The AWS environment to deploy to. Either `dev`, `staging` or `prod`.
+        required: true
+        type: string
+      github_environment:
+        description: The GitHub deployment environment to target.
+        required: false
+        type: string
+      env_file:
+        description: The target `.env` file suffix for the build.
+        required: true
+        type: string
+      node_env:
+        description: The `NODE_ENV` for the build.
+        required: true
+        type: string
+      cloudfront_distribution_name:
+        description: The CloudFront distribution name to use for the app deployment.
+        required: true
+        type: string
+      cache_path:
+        description: Key for part of the node_modules cache.
+        required: true
+        type: string
+      is_pr_app_deploy:
+        description: Whether or not this is a PR App deploy.
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      GITHUB_API_ACCESS_TOKEN:
+        required: false
+      NPM_TOKEN:
+        required: true
+      SEGMENT_TYPEWRITER_TOKEN:
+        required: true
+      JELLYFISH_API_TOKEN:
+        required: true
+      DEVOPS_DATADOG_API_KEY:
+        required: true
+
+jobs:
+  deploy:
+    name: Asset Upload
+    runs-on: ubuntu-20.04
+    container: node:18
+    environment: ${{ inputs.github_environment }}
+    env:
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      SEGMENT_TYPEWRITER_TOKEN: ${{ secrets.SEGMENT_TYPEWRITER_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Restore node modules cache
+        uses: actions/cache@v4
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: |
+            node_modules
+            ./src/analytics
+            ~/.cache/Cypress
+          key: ${{ runner.os }}-${{ inputs.cache_path }}-${{ env.cache-name }}-${{ hashFiles('**/yarn.lock') }}
+
+      - name: Deploy Application
+        if: ${{ !inputs.is_pr_app_deploy }}
+        uses: ./.github/actions/spa-deploy
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          env: ${{ inputs.env }}
+          OWNER: ${{ env.owner }}
+          CONTACT: ${{ env.contact }}
+          REPO: ${{ env.repo }}
+          SERVICE: ${{ env.service }}
+
+      # NOTE: This action does not use an `env` input to determine where to deploy.
+      # Instead, it assumes to deploy the app to the AWS environment tied to the AWS credentials being used.
+      - name: Deploy PR App
+        if: ${{ inputs.is_pr_app_deploy }}
+        uses: ./.github/actions/pull-request-deploy
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          OWNER: ${{ env.owner }}
+          CONTACT: ${{ env.contact }}
+          REPO: ${{ env.repo }}
+          SERVICE: ${{ env.service }}
+
+      - name: Set Public Path
+        uses: ./.github/actions/public-path
+        with:
+          env: ${{ inputs.env }}
+
+      - name: Build App
+        run: yarn build
+        env:
+          NODE_ENV: ${{ inputs.node_env }}
+          ENV_FILE: ${{ inputs.env_file }}
+          GITHUB_SHA: ${{ github.sha }}
+          # Enable GitHub API connection for MFE remote PR app testing (staging and PR apps only)
+          GITHUB_API_ACCESS_TOKEN: ${{ secrets.GITHUB_API_ACCESS_TOKEN }}
+
+      # Todo: enable remote source mapping.
+      # - name: Send Source Map to Datadog
+      #   run: npx datadog-ci sourcemaps upload /public --service=employer-portal-remote-template --release-version=0.1.0 --minified-path-prefix=/public
+      #   env:
+      #     DATADOG_API_KEY: ${{ secrets.DEVOPS_DATADOG_API_KEY }}
+
+      - name: Upload Code
+        uses: ./.github/actions/asset-upload
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          env: ${{ inputs.env }}
+
+  cloudfront-invalidation:
+    needs: [deploy]
+    runs-on: ubuntu-latest
+    name: CloudFront Invalidation
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: 'us-west-2'
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Set CloudFront Distribution ID
+        # The command below will dynamically set the AWS Distribution ID by first retrieving the correct origin value
+        # based on your deployment's subdomain.
+        # e.g. 'employer-portal-remote-template-staging.guildacceptance.com'
+        # e.g. 'pr-3-employer-portal-remote-template.guildacceptance.com'
+        run: echo "AWS_DISTRIBUTION_ID=$(aws cloudfront list-distributions --query "DistributionList.Items[*].{id:Id,origin_domain:Origins.Items[0].DomainName}[?starts_with(origin_domain,'${{ inputs.cloudfront_distribution_name }}.')].id" --output text)" >> $GITHUB_ENV
+
+      - name: Create CloudFront Invalidation
+        run: aws cloudfront create-invalidation --distribution-id ${{ env.AWS_DISTRIBUTION_ID }} --paths "/index.html" "/remoteEntry.js"
+
+  send-dora-metrics-to-jellyfish:
+    needs: [deploy]
+    name: Send DORA Metrics to Jellyfish
+    uses: GuildEducationInc/devops-reusable-workflows/.github/workflows/dora-metrics.yaml@main
+    # Note: We are only collecting metrics for prod deployments at this time.
+    # We also want to send metrics after a failed deployment, in addition to success.
+    if: ${{ inputs.env == 'prod' && always() }}
+    with:
+      ENVIRONMENT: ${{ inputs.env }}
+      # Note: This action cannot read from the env.* namespace, hence the hard-coded CONTACT and OWNER values.
+      CONTACT: employer-portal
+      OWNER: squad-employer-portal
+      STATUS: ${{ contains(needs.*.result, 'failure') == true && 'failure' || 'success'}}
+    secrets: inherit

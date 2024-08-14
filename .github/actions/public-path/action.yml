@@ -1,0 +1,10 @@
+name: Set Public Path for application
+author: Guild Education
+description: Sets the public path URL for the application
+inputs:
+  env:
+    description: 'This represents the env of the deployment'
+    default: 'dev'
+runs:
+  using: 'node20'
+  main: 'index.js'

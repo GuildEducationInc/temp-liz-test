@@ -1,0 +1,23 @@
+# What does this pull request do?
+
+*Briefly summarize any features implemented, bugs fixed, or other code changes.*
+
+-
+
+## Required before merge:
+
+- [ ] Has tests (where applicable)
+- [ ] Has appropriate documentation (comments, readme, etc.)
+- [ ] Passes GitHub Actions & AWS builds
+
+## What is the relevant story?
+
+*Link to the story if there is one. If not, briefly explain why this change was needed.*
+
+[Title of the Jira card]( https://guild-education.atlassian.net/jira/... )
+
+## How do you feel?
+
+*Attach a GIF that describes how you feel about what you wrote or implemented. Feel free to include additional context!*
+
+![](Link to GIPHY image)
