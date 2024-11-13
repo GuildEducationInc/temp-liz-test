@@ -1,14 +1,12 @@
 {
-    "name": "@test/meow-action",
+    "name": "meow-action",
     "version": "0.0.0",
     "repository": {
         "type": "git",
         "url": "https://github.com/GuildEducationInc/temp-liz-test.git"
     },
     "sideEffects": false,
-    "main": "index.cjs.js",
-    "module": "index.js",
-    "types": "index.d.ts",
+    "main": "action.yml",
     "scripts": {
         "release": "npx semantic-release",
         "release:dry": "npx semantic-release --dry-run --no-ci"
