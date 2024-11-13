@@ -2,18 +2,25 @@
   "name": "my-turborepo",
   "private": true,
   "scripts": {
-    "format": "prettier --write \"**/*.{ts,tsx,md}\""
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "release": "turbo run release",
+    "release:dry": "turbo run release:dry"
   },
   "devDependencies": {
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/exec": "^6.0.3",
     "prettier": "^3.2.5",
-    "turbo": "^2.2.3",
-    "typescript": "5.5.4"
+    "semantic-release": "^22.0.6",
+    "semantic-release-monorepo": "^8.0.2",
+    "semantic-release-yarn": "^3.0.2",
+    "turbo": "^2.2.3"
   },
   "engines": {
     "node": ">=18"
   },
   "packageManager": "yarn@4.5.1",
   "workspaces": [
-    "actions/*"
+    "actions/*",
+    "utilities/*"
   ]
 }

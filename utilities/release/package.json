@@ -1,0 +1,6 @@
+{
+  "name": "@utils/release",
+  "version": "0.0.0",
+  "main": "src/index.js",
+  "description": "An internal package that houses the base Semantic Release configuration."
+}
