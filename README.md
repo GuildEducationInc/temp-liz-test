@@ -1,3 +1,5 @@
+-- This branch should be compared against fork-employer-portal-remote-template --
+
 # Employer Portal Micro Frontend (MFE) Remote Starter
 
 > Starter project to get you going with an Employer Portal specific MFE remote application, which will be pulled into the [Employer Portal Host](https://github.com/GuildEducationInc/employer-portal-host).

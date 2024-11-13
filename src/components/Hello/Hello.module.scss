@@ -1,0 +1,20 @@
+// @import "~@guildeducationinc/recess/components/ErrorPage/ErrorPage.module.scss";
+@use '@guildeducationinc/recess/design-tokens/themes/theme.scss';
+
+// // @import '@guildeducationinc/recess/recess-tokens.css'; /* Design tokens */
+// @import '@guildeducationinc/recess/recess-styles.css'; /* Utility styles */
+// @import '@guildeducationinc/recess/recess-components.css'; /* Component styles */
+
+// @include core;
+// @include borders;
+// @include box-shadows;
+// @include colors;
+// @include spacing;
+// @include typography;
+// @include responsive-typography;
+// @include theme;
+
+.container {
+  // background: var(--primary-color);
+  background: $primary-color;
+}

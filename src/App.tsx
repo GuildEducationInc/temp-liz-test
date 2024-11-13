@@ -2,13 +2,17 @@ import { render } from 'react-dom';
 import { BrowserRouter } from 'react-router-dom';
 
 import { EpPortalAuthProvider } from '@guildeducationinc/auth-frontend-tools';
-import { RecessThemeProvider } from '@guildeducationinc/recess';
+import { ErrorPage, Footer, RecessThemeProvider, Typography } from '@guildeducationinc/recess';
+import { RcsTimeline, RcsTimelineItem } from '@guildeducationinc/recess-timeline';
 
-import { AuthenticatedApp } from '@src/AuthenticatedApp';
 import { Error } from '@src/components/Error';
 import { ErrorBoundary } from '@src/components/ErrorBoundary';
-import { GuildOptimizelyProvider } from '@src/components/Providers/GuildOptimizelyProvider';
 import { appBasename } from '@src/utilities';
+
+import { Hello } from './components/Hello';
+import './app.scss';
+// import { AuthenticatedApp } from '@src/AuthenticatedApp';
+// import { GuildOptimizelyProvider } from '@src/components/Providers/GuildOptimizelyProvider';
 
 /**
  * Mount the remote app for local dev via 'yarn start', independent of the host.
@@ -37,15 +41,36 @@ if (process.env.NODE_ENV !== 'production' || process.env.REACT_APP_ENABLE_CYPRES
               clientId={process.env.REACT_APP_AUTH0_CLIENT_ID || ''}
               redirectUri={window.location.origin}
             >
-              <GuildOptimizelyProvider>
-                {/*
+              {/* <GuildOptimizelyProvider> */}
+              {/*
                   Adding main tag here for 'landmark' accessibility requirements when running in isolation.
                   In the deployment, this tag is injected by the host app instead.
                 */}
-                <main>
-                  <AuthenticatedApp />
-                </main>
-              </GuildOptimizelyProvider>
+              <main>
+                <RcsTimeline>
+                  <RcsTimelineItem heading='Action'>
+                    <Typography variant='label2'>Username</Typography>
+                    <Typography variant='label2'>mm/dd/yyyy at 12:00 am</Typography>
+                    <Typography variant='label2'>Comments: Guild is cool!</Typography>
+                  </RcsTimelineItem>
+                  <RcsTimelineItem heading='Action'>
+                    <Typography variant='label2'>Username</Typography>
+                    <Typography variant='label2'>mm/dd/yyyy at 12:00 am</Typography>
+                    <Typography variant='label2'>Comments: Guild is cool!</Typography>
+                  </RcsTimelineItem>
+                  <RcsTimelineItem heading='Action'>
+                    <Typography variant='label2'>Username</Typography>
+                    <Typography variant='label2'>12/28/2023 at 12:00 am</Typography>
+                    <Typography variant='label2'>Comments: Guild is cool!</Typography>
+                  </RcsTimelineItem>
+                </RcsTimeline>
+
+                <ErrorPage goBack={() => null} />
+                <Footer />
+                <Hello />
+                {/* <AuthenticatedApp /> */}
+              </main>
+              {/* </GuildOptimizelyProvider> */}
             </EpPortalAuthProvider>
           </BrowserRouter>
         </ErrorBoundary>

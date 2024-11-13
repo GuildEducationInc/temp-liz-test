@@ -1,0 +1,23 @@
+@use '@guildeducationinc/recess/design-tokens/themes/theme.scss' as *;
+
+// @import '@guildeducationinc/recess/recess-tokens.css'; /* Design tokens */
+// @import '@guildeducationinc/recess/recess-styles.css'; /* Utility styles */
+// @import '@guildeducationinc/recess/recess-components.css'; /* Component styles */
+
+@include core;
+@include borders;
+@include box-shadows;
+@include colors;
+@include spacing;
+@include typography;
+@include responsive-typography;
+@include theme;
+
+body {
+  background: pink;
+}
+
+// import - 1 file - 82.1kb - ~285ms
+// use - 1 file - 82.1kb - ~300ms
+// mix of import and use - 1 file - 82.1kb - ~285ms
+// Note: removing these didn't change file size -
