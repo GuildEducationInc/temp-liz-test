@@ -39,15 +39,6 @@ module.exports.baseConfig = packageName => {
       '@semantic-release/release-notes-generator',
       '@semantic-release/changelog',
       [
-        // This package is not widely used but was our best option given the time,
-        // If support falls, we would likely consider forking the project to ensure
-        // it can be updated for security and compatibility purposes.
-        'semantic-release-yarn',
-        {
-          npmPublish: false,
-        },
-      ],
-      [
         '@semantic-release/github',
         {
           // long-term we might want the GH URL to be more dynamic for other projects

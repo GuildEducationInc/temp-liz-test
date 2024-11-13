@@ -3,6 +3,8 @@
   "ui": "tui",
   "tasks": {
     "release": { },
-    "release:dry": { }
+    "release:dry": {
+      "cache": false
+    }
   }
 }
