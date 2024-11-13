@@ -1,0 +1,18 @@
+# Testing action to see if I can release them independently and will tags
+
+name: Meow
+description: Parse semantic release dry run logs to generate files with release information
+
+outputs:
+  MESSAGE:
+    description: 'Static message from action'
+    value: ${{ steps.meow.outputs.MESSAGE }}
+
+runs:
+  using: composite
+  steps:
+    - name: Meow Message!
+      shell: bash
+      id: meow
+      run: |
+        echo "MESSAGE=hello-world" >> $GITHUB_OUTPUT
