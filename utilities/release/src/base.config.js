@@ -3,7 +3,7 @@ module.exports.baseConfig = packageName => {
   return {
     extends: 'semantic-release-monorepo',
     branches: [
-      { name: 'PLAT-133-composite-actions-monorepo', channel: 'beta', prerelease: true },
+      { name: 'PLAT-133-composite-actions-monorepo', prerelease: 'beta' },
       { name: 'main' },
       { name: 'beta', channel: 'next', prerelease: true },
 
