@@ -15,4 +15,4 @@ runs:
       shell: bash
       id: meow
       run: |
-        echo "MESSAGE=hello-universe" >> $GITHUB_OUTPUT
+        echo "MESSAGE=hello-world" >> $GITHUB_OUTPUT
