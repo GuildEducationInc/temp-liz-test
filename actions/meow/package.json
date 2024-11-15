@@ -6,12 +6,11 @@
         "url": "https://github.com/GuildEducationInc/temp-liz-test.git"
     },
     "sideEffects": false,
-    "main": "action.yml",
     "scripts": {
         "release": "npx semantic-release",
         "release:dry": "npx semantic-release --dry-run --no-ci"
     },
     "devDependencies": {
-        "@utils/release": "workspace:^"
+        "@internal/release": "workspace:^"
     }
 }
