@@ -1,8 +1,10 @@
 'use strict';
 
-const baseConfig = require('@utils/release').baseConfig;
+const baseConfig = require('@internal/release').baseConfig;
 
 var packageName = require('./package.json').name;
+
+console.log('packageName: ', packageName);
 
 // Set the GH_TOKEN for semantic-release
 // Normally this is set in CI and in the terminal environment. For the POC,
